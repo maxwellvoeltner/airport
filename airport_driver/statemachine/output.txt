@@ -1,1 +1,1 @@
-{"state": "state_nine", "loc": 9, "RW6L": false, "RW6R": false, "approach": false, "taxiway": false, "fuel_depot": false, "beacon": false, "gate_open": false, "day": 1, "voice_file": "0.0", "flight_id": "PHX", "mode": "demo"}
+{"state": "state_fourteen", "loc": "14.5", "RW6L": false, "RW6R": false, "approach": false, "taxiway": false, "fuel_depot": true, "beacon": false, "gate_open": false, "day": 1, "voice_file": "21.0", "flight_id": "ORD", "mode": "competition"}

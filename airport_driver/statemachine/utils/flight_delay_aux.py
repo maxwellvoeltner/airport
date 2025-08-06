@@ -206,8 +206,6 @@ def delay_flights( sm ):
 
         # time needed greater than the gap
         elif next_flight_arrival_uninterrupted_time_needed > gap:
-            print("next flight arrival uninterrupted time needed:", next_flight_arrival_uninterrupted_time_needed)
-            print("gap:", gap)
             # calculate how much time we need to delay the departure time by to make the the airplane land on time assuming no more delays
             delay_amount = (next_flight_arrival_uninterrupted_time_needed - gap) + delay_offset
 

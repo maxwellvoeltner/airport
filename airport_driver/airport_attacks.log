@@ -1,7 +1,0 @@
-2025-08-05 11:59:59,340 - [exp2:INFO] [exp2.py:59] - running Fuel Spill now, target is 172.29.1.5
-2025-08-05 11:59:59,340 - [exp2:INFO] [exp2.py:63] - connecting to target via UDP
-2025-08-05 11:59:59,341 - [exp2:INFO] [exp2.py:65] - connected
-2025-08-05 12:00:01,341 - [exp2:INFO] [exp2.py:67] - run fuel WIDE open, would cause spill in reality
-2025-08-05 12:00:06,347 - [exp2:ERROR] [exp2.py:75] - Error message: Modbus Error: [Input/Output] timed out
-2025-08-05 12:00:06,347 - [exp2:INFO] [exp2.py:82] - disconnect now dawg
-2025-08-05 12:00:10,347 - [exp2:INFO] [exp2.py:89] - all finished...

@@ -54,6 +54,7 @@ const Home = () => {
         const json = await response.json();
 
         let input_minutes = json.simulationTime; // Simulation time in minutes
+        
         const adjustedMinutes = input_minutes % 1440; // Wrap around 24-hour format (1440 minutes in a day)
 
         // Calculate the hour and 12-hour-period (AM/PM)

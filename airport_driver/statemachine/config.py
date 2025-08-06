@@ -37,7 +37,7 @@ note:
     the departure times get automatically synced-up with the arrival times to fit the timing of the simulation based on the minutes_per_airplane_cycle
     so the "departureTime" values don't matter here
 '''
-'''
+
 initial_airplanes = [
     { "sourceAirport": "LAX", "arrivalFlight": "HA3", "arrivalTime": 16, "arrivalStatus": "Scheduled", "departureFlight": "HA2", "departureTime": 93, "departureStatus": "Scheduled", "gate": 1 },
     { "sourceAirport": "SFO", "arrivalFlight": "UA113", "arrivalTime": 176, "arrivalStatus": "Scheduled", "departureFlight": "UA112", "departureTime": 253, "departureStatus": "Scheduled", "gate": 2 },
@@ -50,8 +50,8 @@ initial_airplanes = [
     { "sourceAirport": "MIA", "arrivalFlight": "NZ10", "arrivalTime": 1249, "arrivalStatus": "Scheduled", "departureFlight": "NZ09", "departureTime": 1326, "departureStatus": "Scheduled", "gate": 4 },
     { "sourceAirport": "JFK", "arrivalFlight": "AC517", "arrivalTime": 1374, "arrivalStatus": "Scheduled", "departureFlight": "AC516", "departureTime": 1451, "departureStatus": "Scheduled", "gate": 5 }
 ]
-'''
 
+'''
 initial_airplanes = [
     { "sourceAirport": "SEA", "arrivalFlight": "WN1500", "arrivalTime": 720, "arrivalStatus": "Scheduled", "departureFlight": "WN1501", "departureTime": 797, "departureStatus": "Scheduled", "gate": 1 },
     { "sourceAirport": "PHX", "arrivalFlight": "F9265", "arrivalTime": 855, "arrivalStatus": "Scheduled", "departureFlight": "F9266", "departureTime": 932, "departureStatus": "Scheduled", "gate": 2 },
@@ -64,7 +64,7 @@ initial_airplanes = [
     { "sourceAirport": "SAN", "arrivalFlight": "AS1182", "arrivalTime": 1840, "arrivalStatus": "Scheduled", "departureFlight": "AS1183", "departureTime": 1917, "departureStatus": "Scheduled", "gate": 4 },
     { "sourceAirport": "BWI", "arrivalFlight": "WN3421", "arrivalTime": 1990, "arrivalStatus": "Scheduled", "departureFlight": "WN3422", "departureTime": 2067, "departureStatus": "Scheduled", "gate": 5 }
 ]
-
+'''
 
 '''
 the minimum number of loops ( ~ 1 second ) the airplane must stay in a state before being allowed to transition to the nnext state in the normal path
@@ -76,7 +76,7 @@ note:
 '''
 state_minimum_loops = {
     # DEMO mode values should be as low as possible to get through an airplane cycle as fast as possible
-    "demo": {
+    "competition": {
         "s0_min": 1,
         "s1_min": 1,
         "s2_min": 1,
@@ -106,7 +106,7 @@ state_minimum_loops = {
     },
 
     # COMPETITION mode values can be customized to however long it feels appropraite to be in each state and should be at-least how long the voice files for that state are
-    "competition": {
+    "demo": {
         "s0_min": 3,
         "s1_min": 7,
         "s2_min": 7,
@@ -152,13 +152,12 @@ simulation_time_url = "http://localhost:2000/simulationTime/"
 alcms_ip = "172.22.1.8"
 fuel_ip = "172.29.1.5"
 gate_ip = "172.24.1.11"
-gate_address = "B3:0"
+gate_arm = "O:0/0"
 
 ALCMS_MARKERS = {
     "RW6L_on": (0, 1), # M: 0.1
     "RW6L_off": (0, 2), # M: 0.2
-    "RW6R_on": (0, 4), # M: 0.4
-    "RW6R_off": (0, 5), # M: 0.5
+    "RW6R_on_off": (0, 6), # M: 0.5
     "taxiway_lights": (0, 3) # Q: 12.5
 }
 

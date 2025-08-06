@@ -33,8 +33,6 @@ def calculate_timing(state_times):
     time_to_depart = iterations_to_depart * minutes_per_loop
 
     start_time = config.initial_airplanes[0].get("arrivalTime") - time_to_arrive
-    if start_time < 0:
-        start_time += 1440
 
     return {
         "iterations_in_uninterrupted_cycle": iteration_total,

@@ -91,6 +91,9 @@ previous_state = -1
 approach_anim_time = 0
 beacon_anim_time = 0
 gate_anim_time = 0
+gate_close_anim_time = 0
+previous_gate_open = False
+gate_closing_sequence = False
 
 # the simulation
 pygame.init()
@@ -214,8 +217,16 @@ while running:
     # gate
     if (not vital_statuses["gate_open"]):
         gate_anim_time = 0
-        pygame.draw.rect(screen, config.gate_closed_color, (data.gate_x_pos, data.closed_gate_y_pos, data.gate_width, data.gate_height))
+        gate_closing_sequence = True if previous_gate_open else gate_closing_sequence
+        if gate_closing_sequence:
+            gate_close_anim_time = min((gate_close_anim_time + delta_time), 4) # capped at 4 cause that's all the way closed
+            pygame.draw.rect(screen, config.gate_open_color, (data.gate_x_pos, data.closed_gate_y_pos - ((4 - gate_close_anim_time) / 4) * data.gate_height, data.gate_width, data.gate_height))
+            gate_closing_sequence = False if gate_close_anim_time == 4 else True
+        else:
+            pygame.draw.rect(screen, config.gate_closed_color, (data.gate_x_pos, data.closed_gate_y_pos, data.gate_width, data.gate_height))
     else:
+        gate_close_anim_time = 0
+        gate_closing_sequence = False
         gate_anim_time = min((gate_anim_time + delta_time), 4) # capped at 4 cause that's all the way open
         pygame.draw.rect(screen, config.gate_open_color, (data.gate_x_pos, data.closed_gate_y_pos - (gate_anim_time / 4) * data.gate_height, data.gate_width, data.gate_height))
     
@@ -289,6 +300,7 @@ while running:
     # updating the screen
     pygame.display.update()
 
+    previous_gate_open = vital_statuses["gate_open"]
     previous_state = state_num # updating previous state to current state
 
 pygame.quit()

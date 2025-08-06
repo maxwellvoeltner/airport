@@ -1,4 +1,4 @@
-import snap7
+import snap7, time
 from snap7.type import Areas 
 from snap7.util import get_bool
 from pymodbus.client import ModbusTcpClient
@@ -84,20 +84,9 @@ def write_RW6L(client, action):
 ######################## RUNWAY RIGHT ########################
 
 def read_RW6R(data):
-    RW6R_on_byte, RW6R_on_bit = config.ALCMS_MARKERS["RW6R_on"]
-    RW6R_off_byte, RW6R_off_bit = config.ALCMS_MARKERS["RW6R_off"]
-
-    RW6R_on = get_bool(data, RW6R_on_byte, RW6R_on_bit)
-    RW6R_off = get_bool(data, RW6R_off_byte, RW6R_off_bit)
-
-    if RW6R_on and not RW6R_off:
-        status = True
-    elif not RW6R_on and RW6R_off:
-        status = False
-    else:
-        status = False
-
-    return status
+    RW6R_on_off_byte, RW6R_on_off_bit = config.ALCMS_MARKERS["RW6R_on_off"]
+    RW6R = get_bool(data, RW6R_on_off_byte, RW6R_on_off_bit)
+    return RW6R
 
 def write_RW6R(client, action):
     RW6R_on_byte, RW6R_on_bit = config.ALCMS_MARKERS["RW6R_on"]
@@ -155,22 +144,16 @@ def read_fuel(client):
     return val
 
 ######################### GATE #########################
-'''
+
 def create_gate_client():
     client = SLCDriver(config.gate_ip)
-    client.open()  # establish connection once
+    client.open()
     return client
 
-def read_gate_word(gate_client):
-    """
-    Reads the full word (16 bits) from the gate PLC using a persistent client.
-    """
-    result = gate_client.read(config.gate_address)
+def read_gate( client ):
+    result = client.read(config.gate_arm)
     return result.value
-    
-def get_bit(value, bit_offset):
-    return bool(value & (1 << bit_offset))
-'''
+
 
 ######################## Airport Input / Output #########################
 
@@ -184,6 +167,7 @@ def update_environment( sm ):
     RW6R = read_RW6R(runway_data)
     taxiway_lights = read_taxiway_lights(read_output(sm.alcms_client, config.ALCMS_MARKERS["taxiway_lights"][0]))
     fuel = read_fuel(sm.fuel_client)
+    gate_open = read_gate(sm.gate_client)
 
     env = {
         "approach_lights":    RW6L,
@@ -191,10 +175,29 @@ def update_environment( sm ):
         "beacon_light":       RW6L,
         "RW6L_lights":        RW6L,
         "RW6R_lights":        RW6R,
-        "fuel_depot_light":   fuel,
-        "gate_open":          False
+        "fuel_depot_light":   True,
+        "gate_open":          gate_open
     }
     return env
+
+
+def handle_exit( state_machine ):
+    if state_machine.alcms_client:
+        alcms_client = state_machine.alcms_client
+        write_RW6L(alcms_client, "OFF")
+        write_RW6R(alcms_client, "OFF")
+        write_RW6R(alcms_client, "OFF")
+        alcms_client.disconnect()
+        print("Closed ALCMS connections")
+    
+    if state_machine.fuel_client:
+        state_machine.fuel_client.close()
+        print("Closed Fuel connection")
+
+    if state_machine.gate_client:
+        state_machine.gate_client.close()
+        print("Closed Gate connection")
+
 
 # sends out airport and airplane information to a file for the display driver to read
 def send_environment(sm, env):
