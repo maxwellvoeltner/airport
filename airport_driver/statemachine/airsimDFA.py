@@ -56,11 +56,8 @@ class Airsim( StateMachine ):
     state_twenty_two = State("state_twenty_two") # top of right runway (takeoff sequence 3/4)
     state_twenty_three = State("state_twenty_three") # above top of right runway (takeoff sequence 4/4)
     state_twenty_four = State("state_twenty_four") # well over the sea above the right runway
-    # holding pattern states (25 - 28)
-    state_twenty_five = State("state_twenty_five") # top right of left sea (holding pattern sequence 1/4)
-    state_twenty_six = State("state_twenty_six") # top left of left sea (holding pattern sequence 2/4)
-    state_twenty_seven = State("state_twenty_seven") # middle left of left sea (holding pattern sequence 3/4)
-    state_twenty_eight = State("state_twenty_eight") # middle right of left sea (holding pattern sequence 4/4)
+    # holding pattern state
+    state_twenty_five = State("state_twenty_five") # top right of left sea (holding pattern sequence 1/1)
 
     # sends an event - the statemachine class makes the program fail if an event is sent and its invalid so the except and pass avoid that
     def send_event(self, event):
@@ -85,8 +82,11 @@ class Airsim( StateMachine ):
             self.current_flight_index += 1 # move onto the next flight
 
     def cancel_inbound_flight(self):
-        self.cancel_outbound_flight()
+        cancelled_last_flight = (self.current_flight_index == len(self.flight_list) - 1)
+        self.cancel_outbound_flight() # we need to keep the current time of the flight for the delay function so we can't overwrite the arrival time yet
         state_transition_aux.update_flight(self.current_flight_id, {"arrivalTime": -1, "arrivalStatus": "Rerouted (Maui)"})
+        if cancelled_last_flight: # edge case that the last flight gets rerouted (but the update happens after we reset the airplanes already)
+            state_transition_aux.reset_airplanes() # so just reset them again to get the arrival of the last flight set to its time and scheduled
 
     def exit_holding(self):
         state_transition_aux.update_flight(self.current_flight_id, {"arrivalTime": -1, "arrivalStatus": "En Route"})
@@ -287,47 +287,13 @@ class Airsim( StateMachine ):
     state_twenty_four_to_state_zero.add_event("clear")
     state_twenty_four_to_state_zero.cond(can_advance_from_state_twenty_four)
 
-    # holding pattern
-    state_twenty_five_to_state_twenty_six = state_twenty_five.to(state_twenty_six)
-    state_twenty_five_to_state_twenty_six.add_event("holding")
-    state_twenty_five_to_state_twenty_six.cond(can_advance_from_holding)
-    # back to state 3
+    # holding pattern back to state 3
     state_twenty_five_to_state_three = state_twenty_five.to(state_three, on="exit_holding")
     state_twenty_five_to_state_three.add_event("clear")
-
-    state_twenty_six_to_state_twenty_seven = state_twenty_six.to(state_twenty_seven)
-    state_twenty_six_to_state_twenty_seven.add_event("holding")
-    state_twenty_six_to_state_twenty_seven.cond(can_advance_from_holding)
-    # back to state 3
-    state_twenty_six_to_state_three = state_twenty_six.to(state_three, on="exit_holding")
-    state_twenty_six_to_state_three.add_event("clear")
-
-    state_twenty_seven_to_state_twenty_eight = state_twenty_seven.to(state_twenty_eight)
-    state_twenty_seven_to_state_twenty_eight.add_event("holding")
-    state_twenty_seven_to_state_twenty_eight.cond(can_advance_from_holding)
-    # back to state 3
-    state_twenty_seven_to_state_three = state_twenty_seven.to(state_three, on="exit_holding")
-    state_twenty_seven_to_state_three.add_event("clear")
-
-    state_twenty_eight_to_state_twenty_five = state_twenty_eight.to(state_twenty_five)
-    state_twenty_eight_to_state_twenty_five.add_event("holding")
-    state_twenty_eight_to_state_twenty_five.cond(can_advance_from_holding)
-    # back to state 3
-    state_twenty_eight_to_state_three = state_twenty_eight.to(state_three, on="exit_holding")
-    state_twenty_eight_to_state_three.add_event("clear")
 
     # cancellation of inbound flight
     state_twenty_five_to_state_zero = state_twenty_five.to(state_zero, on="cancel_inbound_flight")
     state_twenty_five_to_state_zero.add_event("delayed-beyond-limit")
-
-    state_twenty_six_to_state_zero = state_twenty_six.to(state_zero, on="cancel_inbound_flight")
-    state_twenty_six_to_state_zero.add_event("delayed-beyond-limit")
-
-    state_twenty_seven_to_state_zero = state_twenty_seven.to(state_zero, on="cancel_inbound_flight")
-    state_twenty_seven_to_state_zero.add_event("delayed-beyond-limit")
-
-    state_twenty_eight_to_state_zero = state_twenty_eight.to(state_zero, on="cancel_inbound_flight")
-    state_twenty_eight_to_state_zero.add_event("delayed-beyond-limit")
 
     # cancellation of outgoing flight
     state_seven_to_state_zero = state_seven.to(state_zero, on="cancel_outbound_flight")
@@ -394,6 +360,7 @@ class Airsim( StateMachine ):
         self.loc = 0 # top-left off the screen
         if (self.current_flight_index == 0): # resetting to start time after all 10 airplanes have gone through
             self.simulation_minutes = self.starting_minutes
+        print(self.current_flight_id)
 
     def on_exit_state_zero(self):
         if (self.mode == "demo"):
@@ -519,12 +486,3 @@ class Airsim( StateMachine ):
     def on_enter_state_twenty_five(self):
         self.enter_state(25, "0.0") # top right of left sea (holding pattern sequence 1/4)
         state_transition_aux.update_flight(self.current_flight_id, {"arrivalStatus": "Holding"})
-
-    def on_enter_state_twenty_six(self):
-        self.enter_state(26, "0.0") # top left of left sea (holding pattern sequence 2/4)
-
-    def on_enter_state_twenty_seven(self):
-        self.enter_state(27, "0.0") # middle left of left sea (holding pattern sequence 3/4)
-
-    def on_enter_state_twenty_eight(self):
-        self.enter_state(28, "0.0") # middle right of left sea (holding pattern sequence 4/4)

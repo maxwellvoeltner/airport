@@ -1,59 +1,47 @@
-// createContext() lets you make a new context to provide to components
-import { createContext, useReducer } from 'react'
+// AirplaneContext.js
+import { createContext, useContext, useState, useEffect } from 'react';
 
-// creating and exporting the context
-export const AirplaneContext = createContext()
+export const AirplaneContext = createContext();
 
-// 
-export const airplanesReducer = (state, action) => {
-    switch (action.type) {
-        case 'SET_AIRPLANES':
-            return {
-                airplanes: action.payload
-            }
-        case 'CREATE_AIRPLANE':
-            return  {
-                airplanes: [action.payload, ...state.airplanes]
-            }
-        case 'DELETE_AIRPLANE':
-
-            return {
-                airplanes: state.airplanes.filter((w) => w._id !== action.payload._id)
-            }
-        default:
-            return state
-    }
-}
-
-/*
-provide the context to components
-wraps application so every component can use it
-returning a template
-
-children is the app component that is wrapped by the
-context provider
-
-by returning children wrapped by the context provider,
-it's returning/executing the root component
-which is what renders the app
-so its a refresh 
-*/
 export const AirplanesContextProvider = ({ children }) => {
+  const [airplanes, setAirplanes] = useState(null);
 
-    /*
-    use reducer:
-    argument 1) reducer function
-    argument 2) array of airplanes called airplanes that is null to begin with (initial value for state)
-    */
-    const [state, dispatch] = useReducer(airplanesReducer, {
-        airplanes: null
-    })
+  useEffect(() => {
+    const fetchAirplanes = async () => {
+      try {
+        const response = await fetch('/api/airplanes/', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-auth-token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ik1heCIsInJvbGVzIjoiQWRtaW4iLCJpYXQiOjE3MTkzMzQ3Njl9.V7lqhmQZ996Vs3jNxLwjD01inR8aiuy8hpI-gm9IiFE'
+          },
+        });
 
-    // dispatch({type: 'SET_AIRPLANES', payload: [{}, {}]})
+        if (!response.ok) return;
 
-    return (
-        <AirplaneContext.Provider value={{...state, dispatch}}>
-          { children }
-        </AirplaneContext.Provider>
-    )
-}
+        const json = await response.json();
+        setAirplanes(json);
+      } catch (err) {
+        console.error('Failed to fetch airplanes:', err);
+      }
+    };
+
+    const interval = setInterval(fetchAirplanes, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <AirplaneContext.Provider value={airplanes}>
+      {children}
+    </AirplaneContext.Provider>
+  );
+};
+
+
+export const useAirplanesContext = () => {
+  const context = useContext(AirplaneContext);
+  if (context === undefined) {
+    throw new Error('useAirplanesContext must be used within an AirplanesContextProvider');
+  }
+  return context;
+};

@@ -21,8 +21,7 @@ def state_name_to_index( state_name ):
         "fourteen": 14, "fifteen": 15, "sixteen": 16, "seventeen": 17,
         "eighteen": 18, "nineteen": 19, "twenty": 20, "twenty_one": 21,
         "twenty_two": 22, "twenty_three": 23, "twenty_four": 24,
-        "twenty_five": None, "twenty_six": None, "twenty_seven": None,
-        "twenty_eight": None
+        "twenty_five": None,
     }
 
     # splits the state name into substrings by the underscore and gets the last one ( which is the position of the english version of the number of the state )
@@ -137,7 +136,7 @@ def delay_flights( sm ):
                 uninterrupted_time_needed = calculate_uninterrupted_time(sm, "current_flight_arrival")
 
                 # if the state machine doesn't have enough time then we need to delay the arrival 
-                if uninterrupted_time_needed > gap:
+                if (uninterrupted_time_needed > gap) and ((uninterrupted_time_needed - gap) >= sm.minutes_per_loop): # (not just because the time got skipped over due to the loops per minute being > 1)
 
                     # calculate how much time we need to delay the arrival time by to make the the airplane land on time assuming no more delays
                     delay_amount = uninterrupted_time_needed - gap
@@ -157,7 +156,7 @@ def delay_flights( sm ):
                 uninterrupted_time_needed = calculate_uninterrupted_time(sm, "current_flight_departure")
 
                 # if the state machine doesn't have enough time then we need to delay the departure 
-                if uninterrupted_time_needed > gap:
+                if (uninterrupted_time_needed > gap) and ((uninterrupted_time_needed - gap) >= sm.minutes_per_loop): # (not just because the time got skipped over due to the loops per minute being > 1)
                     # calculate how much time we need to delay the departure time by to make the the airplane land on time assuming no more delays
                     delay_amount = uninterrupted_time_needed - gap
 
@@ -204,8 +203,8 @@ def delay_flights( sm ):
                 }
             })
 
-        # time needed greater than the gap
-        elif next_flight_arrival_uninterrupted_time_needed > gap:
+        # time needed greater than the gap and there was an actual loop of delay (not just because the time got skipped over due to the loops per minute being > 1)
+        elif (next_flight_arrival_uninterrupted_time_needed > gap) and ((next_flight_arrival_uninterrupted_time_needed - gap) >= sm.minutes_per_loop):
             # calculate how much time we need to delay the departure time by to make the the airplane land on time assuming no more delays
             delay_amount = (next_flight_arrival_uninterrupted_time_needed - gap) + delay_offset
 

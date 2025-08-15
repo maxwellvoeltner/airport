@@ -19,18 +19,17 @@ airplane_shape_position = (88 * config.screen_width_conversion_factor, 72 * conf
 
 # Location numbers mapped to on-screen position coordinates
 locs = {
-    '0': (-400, -400), '1': (200, 160), '2': (280, 620), 
-    '3': (400, 1000), '4': (560, 1540), '5': (840, 2000), 
+    '0': (0, -400), '1': (200, 160), '2': (280, 620), 
+    '3': (400, 1100), '4': (600, 1540), '5': (1000, 2000), 
     '6': (1724, 2080), '7': (1916, 1760), '8': (1916, 1160), 
     '9': (1840, 620), '10': (1956, 440), '11': (2360, 440), 
     '12': (2700, 440), '13': (2780, 660),
     '14.1': (3040, 760), '14.2': (2940, 760), '14.3': (2840, 760),
     '14.4': (2840, 945), '14.5': (2940, 945), '14.6': (3040, 945),
     '15': (2760, 940), '16': (2720, 1280), '17': (2720, 1680), 
-    '18': (2720, 1920), '19': (2360, 1920), '20': (2348, 1740), 
-    '21': (2348, 1360), '22': (2348, 660), '23': (2348, 140), 
-    '24': (2360, -400), '25': (160, 640), '26': (160, 320), 
-    '27': (480, 320), '28': (480, 640)
+    '18': (2700, 1920), '19': (2360, 1920), '20': (2348, 1740), 
+    '21': (2348, 1360), '22': (2348, 660), '23': (2348, -100), 
+    '24': (2360, -400), '25': (750, 640), '25-origin': (450, 640)
 }
 
 # location coordinates adjusted for screen resolution
@@ -44,14 +43,14 @@ locs = {
 
 # Degrees in radians of airplane in each location
 loc_radians = {
-    '0': 0, '1': (11 * math.pi / 12), '2': (11 * math.pi / 12), '3': (7 * math.pi / 8), '4': (5 * math.pi / 6),
-    '5': (3 * math.pi / 5), '6': (math.pi / 4), '7': 0, '8': 0, '9': 0, '10': (2 * math.pi) / 5,
+    '0': (11 * math.pi / 12), '1': (11 * math.pi / 12), '2': (11 * math.pi / 12), '3': (7 * math.pi / 8), '4': (3 * math.pi / 4),
+    '5': (3 * math.pi / 5), '6': (math.pi / 4), '7': 0, '8': -(math.pi / 16), '9': 0, '10': (2 * math.pi) / 5,
     '11': math.pi / 2, '12': (3 * math.pi / 4), '13': (9 * math.pi / 10), '14.1': math.pi,
     '14.2': math.pi, '14.3': math.pi, '14.4': 0, '14.5': 0, '14.6': 0, '15': (5 * math.pi) / 4,
-    '16': math.pi, '17': math.pi, '18': (5 * math.pi / 4), '19': (7 * math.pi / 4), '20': 0,
-    '21': 0, '22': 0, '23': 0, '24': 0, '25': (7 * math.pi / 4),
-    '26': math.pi / 4, '27': (3 * math.pi / 4), '28': (5 * math.pi / 4)
+    '16': math.pi, '17': math.pi, '18': (5 * math.pi / 4), '19': (7 * math.pi / 4), '20': (2 * math.pi),
+    '21': (2 * math.pi), '22': (2 * math.pi), '23': (2 * math.pi), '24': (2 * math.pi), '25': 0
 }
+
 
 # Voice file number mapped to name of mp3 file
 voice_files = {
@@ -61,54 +60,6 @@ voice_files = {
     '13.0': "13.0.wav", '14.0': "14.0.wav", '15.0': "15.0.wav", '16.0': "16.0.wav", '17.0': "17.0.wav", 
     '18.0': "18.0.wav", '20.0': "20.0.wav", '21.0': "21.0.wav", '22.0': "22.0.wav", '23.0': "23.0.wav", 
     '24.0': "24.0.wav", '25.0': "25.0.wav", '26.0': "26.0.wav"
-}
-
-# List only the vitals you care about for your display
-vital_names = [
-    "day", "RW6L", "RW6R", "approach", "VASI",
-    "taxiway", "fuel_depot", "beacon", "gate"
-]
-
-# Vitals lists
-day_vitals = ["gate"]
-can_land_night_vitals = ["beacon", "approach", "RW6L", "gate"]
-can_advance_RW6L_vitals = ["day", "RW6L", "gate"]
-can_fuel_vitals = ["RW6L", "fuel_depot", "gate"]
-can_advance_taxiway_vitals = ["taxiway", "gate"]
-can_advance_ramp_vitals = ["gate"]
-can_advance_RW6R_vitals = ["RW6R", "gate"]
-
-# State-to-vitals mapping using state names as keys
-state_vital_components = {
-    "state_zero":        {"day": [], "night": []},
-    "state_one":         {"day": [], "night": []},
-    "state_two":         {"day": [], "night": []},
-    "state_three":       {"day": ["gate"], "night": ["beacon", "approach", "RW6L", "gate"]},
-    "state_four":        {"day": ["gate"], "night": ["beacon", "approach", "RW6L", "gate"]},
-    "state_five":        {"day": ["gate"], "night": ["beacon", "approach", "RW6L", "gate"]},
-    "state_six":         {"day": ["gate"], "night": ["beacon", "approach", "RW6L", "gate"]},
-    "state_seven":       {"day": ["gate"], "night": ["RW6L", "gate"]},
-    "state_eight":       {"day": ["gate"], "night": ["RW6L", "gate"]},
-    "state_nine":        {"day": ["fuel_depot", "gate"], "night": ["RW6L", "fuel_depot", "gate"]},
-    "state_ten":         {"day": ["gate"], "night": ["taxiway", "gate"]},
-    "state_eleven":      {"day": ["gate"], "night": ["taxiway", "gate"]},
-    "state_twelve":      {"day": ["gate"], "night": ["gate"]},
-    "state_thirteen":    {"day": ["gate"], "night": ["gate"]},
-    "state_fourteen":    {"day": ["gate"], "night": ["gate"]},
-    "state_fifteen":     {"day": ["gate"], "night": ["gate"]},
-    "state_sixteen":     {"day": ["gate"], "night": ["taxiway", "gate"]},
-    "state_seventeen":   {"day": ["gate"], "night": ["taxiway", "gate"]},
-    "state_eighteen":    {"day": ["gate"], "night": ["taxiway", "gate"]},
-    "state_nineteen":    {"day": ["gate"], "night": ["taxiway", "gate"]},
-    "state_twenty":      {"day": ["gate"], "night": ["RW6R", "gate"]},
-    "state_twenty_one":  {"day": ["gate"], "night": ["RW6R", "gate"]},
-    "state_twenty_two":  {"day": ["gate"], "night": ["RW6R", "gate"]},
-    "state_twenty_three":{"day": [], "night": []},
-    "state_twenty_four": {"day": [], "night": []},
-    "state_twenty_five": {"day": ["gate"], "night": ["beacon", "approach", "RW6L", "gate"]},
-    "state_twenty_six":  {"day": ["gate"], "night": ["beacon", "approach", "RW6L", "gate"]},
-    "state_twenty_seven":{"day": ["gate"], "night": ["beacon", "approach", "RW6L", "gate"]},
-    "state_twenty_eight":{"day": ["gate"], "night": ["beacon", "approach", "RW6L", "gate"]},
 }
 
 # Left Runway Lights coordinates
@@ -196,3 +147,126 @@ gate_x_pos = 1517 * config.screen_width_conversion_factor
 closed_gate_y_pos = 480 * config.screen_height_conversion_factor
 gate_width = 15 * config.screen_width_conversion_factor
 gate_height = 90 * config.screen_height_conversion_factor
+
+
+# names of the airport i/o components
+vital_names = [
+    "day", "RW6L", "RW6R", "approach", "VASI",
+    "taxiway", "fuel_depot", "beacon", "gate"
+]
+
+# Vitals lists
+day_vitals = ["gate"]
+can_land_night_vitals = ["beacon", "approach", "RW6L", "gate"]
+can_advance_RW6L_vitals = ["day", "RW6L", "gate"]
+can_fuel_vitals = ["RW6L", "fuel_depot", "gate"]
+can_advance_taxiway_vitals = ["taxiway", "gate"]
+can_advance_ramp_vitals = ["gate"]
+can_advance_RW6R_vitals = ["RW6R", "gate"]
+
+# State-to-vitals mapping using state names as keys
+state_vital_components = {
+    "state_zero":        {"day": [], "night": []},
+    "state_one":         {"day": [], "night": []},
+    "state_two":         {"day": [], "night": []},
+    "state_three":       {"day": ["gate"], "night": ["beacon", "approach", "RW6L", "gate"]},
+    "state_four":        {"day": ["gate"], "night": ["beacon", "approach", "RW6L", "gate"]},
+    "state_five":        {"day": ["gate"], "night": ["beacon", "approach", "RW6L", "gate"]},
+    "state_six":         {"day": ["gate"], "night": ["beacon", "approach", "RW6L", "gate"]},
+    "state_seven":       {"day": ["gate"], "night": ["RW6L", "gate"]},
+    "state_eight":       {"day": ["gate"], "night": ["RW6L", "gate"]},
+    "state_nine":        {"day": ["fuel_depot", "gate"], "night": ["RW6L", "fuel_depot", "gate"]},
+    "state_ten":         {"day": ["gate"], "night": ["taxiway", "gate"]},
+    "state_eleven":      {"day": ["gate"], "night": ["taxiway", "gate"]},
+    "state_twelve":      {"day": ["gate"], "night": ["gate"]},
+    "state_thirteen":    {"day": ["gate"], "night": ["gate"]},
+    "state_fourteen":    {"day": ["gate"], "night": ["gate"]},
+    "state_fifteen":     {"day": ["gate"], "night": ["gate"]},
+    "state_sixteen":     {"day": ["gate"], "night": ["taxiway", "gate"]},
+    "state_seventeen":   {"day": ["gate"], "night": ["taxiway", "gate"]},
+    "state_eighteen":    {"day": ["gate"], "night": ["taxiway", "gate"]},
+    "state_nineteen":    {"day": ["gate"], "night": ["taxiway", "gate"]},
+    "state_twenty":      {"day": ["gate"], "night": ["RW6R", "gate"]},
+    "state_twenty_one":  {"day": ["gate"], "night": ["RW6R", "gate"]},
+    "state_twenty_two":  {"day": ["gate"], "night": ["RW6R", "gate"]},
+    "state_twenty_three":{"day": [], "night": []},
+    "state_twenty_four": {"day": [], "night": []},
+    "state_twenty_five": {"day": ["gate"], "night": ["beacon", "approach", "RW6L", "gate"]},
+    "END"               :{"day": [], "night": []}
+}
+
+state_minimum_loops = {
+    # DEMO mode values should be as low as possible to get through an airplane cycle as fast as possible
+    "demo": {
+        "0": 3,
+        "1": 3,
+        "2": 2,
+        "3": 2,
+        "4": 2,
+        "5": 2,
+        "6": 2,
+        "7": 2,
+        "8": 3,
+        "9": 3, # should be less than the times in the state machine config to let the plane sit at the gate for a bit
+        "10": 2,
+        "11": 2,
+        "12": 2,
+        "13": 2,
+        "14.1": 2, # these 14. whatever's should be less than the times in the state machine config to let the plane sit at the gate for a bit
+        "14.2": 2,
+        "14.3": 2,
+        "14.4": 2,
+        "14.5": 2,
+        "14.6": 2,
+        "15": 2,
+        "16": 2,
+        "17": 2,
+        "18": 2,
+        "19": 2,
+        "20": 2,
+        "21": 1,
+        "22": 1,
+        "23": 1,
+        "24": 1,
+        "25": 2,
+    },
+
+    # COMPETITION mode values can be customized to however long it feels appropraite to be in each state and should be at-least how long the voice files for that state are
+    "competition": {
+        "0": 3,
+        "1": 3,
+        "2": 2,
+        "3": 2,
+        "4": 2,
+        "5": 2,
+        "6": 2,
+        "7": 2,
+        "8": 3,
+        "9": 3, # should be less than the times in the state machine config to let the plane sit at the gate for a bit
+        "10": 2,
+        "11": 2,
+        "12": 2,
+        "13": 2,
+        "14.1": 2, # these 14. whatever's should be less than the times in the state machine config to let the plane sit at the gate for a bit
+        "14.2": 2,
+        "14.3": 2,
+        "14.4": 2,
+        "14.5": 2,
+        "14.6": 2,
+        "15": 2,
+        "16": 2,
+        "17": 2,
+        "18": 2,
+        "19": 2,
+        "20": 2,
+        "21": 1,
+        "22": 1,
+        "23": 1,
+        "24": 1,
+        "25": 2,
+    }
+}
+
+for _, minimum_loops_dict in state_minimum_loops.items():
+    for key, loops in minimum_loops_dict.items():
+        minimum_loops_dict[key] = loops * config.state_machine_seconds_per_loop

@@ -1,32 +1,16 @@
 import sys, requests
 from time import time, sleep
-from utils import event_checkers, flight_delay_aux, setup_aux, airport_io, config_validator
+from utils import event_checkers, flight_delay_aux, setup_aux, airport_io, config_validator, file_writing
 import config
 
 
 def run_demo( sm ):
-    '''
-    DEMO mode:
-        - this is the loop that runs DEMO mode
-        - it forces a normal path through the airport
-        - the state machine in DEMO mode turns on/off the lights in the airport based on where it is in its flight path and the time of day
-        - runs indefinitely
-    
-    Parameters:
-        sm (Airsim(StateMachine)) -> the state machine that controls the state of the airplane
-
-    Returns:
-        None
-    '''
     try:
         while True:
             try:
                 t = time()
                 # sending current time to the backend database (for the flight board to read and display)
                 requests.post( config.simulation_time_url, json={"time": sm.simulation_minutes} )
-
-                # getting the airport environment for the state machine can evaluate
-                airport_io.update_environment( sm )
 
                 # trying to advance to the next state in the normal path
                 sm.send_event("clear")
@@ -35,15 +19,17 @@ def run_demo( sm ):
                 env = airport_io.update_environment( sm )
                 
                 # sending the environment and relevant flight info to an output file (for the display driver to read and display)
-                airport_io.send_environment( sm, env )
+                sleep(max(0, 1 - (time() - t))) # this is for the airplane animation to time up nicely in the display
+                file_writing.send_environment( sm, env )
 
                 # loop maintainence
                 sm.loop_num += 1 # updating loop number (necessary for state transition logic)
                 sm.simulation_minutes = (sm.simulation_minutes + sm.minutes_per_loop)  # updating the sim time in minutes
                 print(sm.current_state.name)
-                sleep(max(0, 1 - (time() - t)))
+                sleep(max(0, 1.1 - (time() - t)))
 
-            except:
+            except Exception as e:
+                print(e)
                 pass # incase an error happens from reading or writing just continue
 
     except KeyboardInterrupt:
@@ -51,24 +37,11 @@ def run_demo( sm ):
 
 
 def run_competition( sm ):
-    '''
-    COMPETITION mode:
-        - this is the loop that runs COMPETITION mode (Hackers vs Defenders)
-        - it evaluates the environment to decide what event should be sent to the state machine for state transitioning
-        - the state machine in COMPETITION mode does NOT control the lights
-        - runs for the length of time specified in the config attribute: competition_mode_maximum_time_in_minutes
-    
-    Parameters:
-        sm (Airsim(StateMachine)) -> the state machine that controls the state of the airplane
-
-    Returns:
-        None
-    '''
     try:
         # setting up the length of time the COMPETITION mode runs for
         start_time = time()
         end_condition = lambda: (time() - start_time) < (config.competition_mode_maximum_time_in_minutes * 60)
-
+        a = start_time
         while end_condition( ):
             try:
                 t = time()
@@ -77,6 +50,7 @@ def run_competition( sm ):
 
                 # getting airport environment (inputs)
                 env = airport_io.update_environment( sm )
+                file_writing.send_environment( sm, env )
 
                 # getting current state to determine which check(s) should be done (to avoid doing all the checks so we can save time)
                 current_state = sm.current_state.name
@@ -90,10 +64,10 @@ def run_competition( sm ):
                     sm.send_event("clear")
                 
                 # states 3 - 6 (normal path over the sea) and 25 - 28 (holding pattern) need the airport to have the "can-land" condition satisfied in order to transition
-                elif (current_state in ["state_three", "state_four", "state_five", "state_six", "state_twenty_five", "state_twenty_six", "state_twenty_seven", "state_twenty_eight"]):
+                elif (current_state in ["state_three", "state_four", "state_five", "state_six", "state_twenty_five"]):
                     if flight_delay_aux.check_for_cancellation( sm , current_state ):
                         sm.send_event("delayed-beyond-limit")
-                        print("cancel")
+                        print("canceled flight")
                     elif (event_checkers.check_can_land(sm.day, env['beacon_light'], env['approach_lights'], env['RW6L_lights'], env['gate_open'])):
                         sm.send_event("clear")
                     else:
@@ -142,19 +116,21 @@ def run_competition( sm ):
 
                 
                 # sending the environment and relevant flight info to an output file (for the display driver to read and display)
-                airport_io.send_environment( sm, env )
+                sleep(max(0, 1 - (time() - t))) # this is for the airplane animation to time up nicely in the display
+                file_writing.send_environment( sm, env )
 
                 # loop maintainence
                 sm.loop_num += 1 # updating loop number (necessary for state transition logic)
                 sm.simulation_minutes = (sm.simulation_minutes + sm.minutes_per_loop) # updating the sim time in minutes
                 print(sm.current_state.name)
-                sleep(max(0, 1 - (time() - t)))
+                sleep(max(0, 1.1 - (time() - t)))
 
-            except:
+            except Exception as e:
+                print(e)
                 pass # in case a reading error happens just continue
 
         # after COMPETITION time is up - send specially formatted environment and relevant flight info to the output file so the display driver knows it's time to display results
-        airport_io.final_send_environment( sm, airport_io.update_environment( sm ) )
+        file_writing.final_send_environment( sm, airport_io.update_environment( sm ) )
         airport_io.handle_exit( sm )
 
     except KeyboardInterrupt:

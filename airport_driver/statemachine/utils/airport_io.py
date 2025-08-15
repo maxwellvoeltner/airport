@@ -3,13 +3,7 @@ from snap7.type import Areas
 from snap7.util import get_bool
 from pymodbus.client import ModbusTcpClient
 from pycomm3 import SLCDriver
-import json
-from filelock import FileLock
 import config
-
-# file lock for concurrency issue avoidance since there's 2 files accessing that output file
-file_path = "./output.txt"
-lock = FileLock(f"{file_path}.lock")
 
 ######################### ALCMS #########################
 
@@ -84,8 +78,8 @@ def write_RW6L(client, action):
 ######################## RUNWAY RIGHT ########################
 
 def read_RW6R(data):
-    RW6R_on_off_byte, RW6R_on_off_bit = config.ALCMS_MARKERS["RW6R_on_off"]
-    RW6R = get_bool(data, RW6R_on_off_byte, RW6R_on_off_bit)
+    RW6R_output_byte, RW6R_output_bit = config.ALCMS_MARKERS["RW6R_output"]
+    RW6R = get_bool(data, RW6R_output_byte, RW6R_output_bit)
     return RW6R
 
 def write_RW6R(client, action):
@@ -168,14 +162,14 @@ def update_environment( sm ):
     taxiway_lights = read_taxiway_lights(read_output(sm.alcms_client, config.ALCMS_MARKERS["taxiway_lights"][0]))
     fuel = read_fuel(sm.fuel_client)
     gate_open = read_gate(sm.gate_client)
-
+    
     env = {
         "approach_lights":    RW6L,
         "taxiway_lights":     taxiway_lights,
         "beacon_light":       RW6L,
         "RW6L_lights":        RW6L,
         "RW6R_lights":        RW6R,
-        "fuel_depot_light":   True,
+        "fuel_depot_light":   (True if sm.mode == "competition" else True), # just pretend the fuel is always on/working if in demo mode
         "gate_open":          gate_open
     }
     return env
@@ -184,9 +178,10 @@ def update_environment( sm ):
 def handle_exit( state_machine ):
     if state_machine.alcms_client:
         alcms_client = state_machine.alcms_client
-        write_RW6L(alcms_client, "OFF")
-        write_RW6R(alcms_client, "OFF")
-        write_RW6R(alcms_client, "OFF")
+        if state_machine.mode == "demo":
+            write_RW6L(alcms_client, "OFF")
+            write_RW6R(alcms_client, "OFF")
+            write_taxiway_lights(alcms_client, "OFF")
         alcms_client.disconnect()
         print("Closed ALCMS connections")
     
@@ -197,51 +192,3 @@ def handle_exit( state_machine ):
     if state_machine.gate_client:
         state_machine.gate_client.close()
         print("Closed Gate connection")
-
-
-# sends out airport and airplane information to a file for the display driver to read
-def send_environment(sm, env):
-    with lock:
-        with open(file_path, "w") as file:
-            # Build the dictionary
-            output = {
-                "state": sm.current_state.name,
-                "loc": sm.loc,
-                "RW6L": env["RW6L_lights"],
-                "RW6R": env["RW6R_lights"],
-                "approach": env["approach_lights"],
-                "taxiway": env["taxiway_lights"],
-                "fuel_depot": env["fuel_depot_light"],
-                "beacon": env["beacon_light"],
-                "gate_open": env["gate_open"],
-                "day": sm.day,
-                "voice_file": sm.voiceComm,
-                "flight_id": sm.current_flight_id,
-                "mode": sm.mode
-            }
-            file.write(json.dumps(output))
-            file.flush()
-
-
-def final_send_environment(sm, env):
-    with lock:
-        with open(file_path, "w") as file:
-            output = {
-                "state": "END",
-                "loc": sm.loc,
-                "RW6L": env["RW6L_lights"],
-                "RW6R": env["RW6R_lights"],
-                "approach": env["approach_lights"],
-                "taxiway": env["taxiway_lights"],
-                "fuel_depot": env["fuel_depot_light"],
-                "beacon": env["beacon_light"],
-                "gate_open": env["gate_open"],
-                "day": sm.day,
-                "voice_file": sm.voiceComm,
-                "flight_id": sm.current_flight_id,
-                "mode": sm.mode
-            }
-            file.write(json.dumps(output))
-            file.flush()
-
-    print("simulation over")

@@ -61,11 +61,22 @@ def update_airplane_position(new_position, position):
     flight_num_text_box.top += delta_y
 
 
-# plays voice file
-def play_voice_file(voice_file, mode):
-    pygame.mixer.music.load(voice_file)
-    pygame.mixer.music.set_volume(0 if (mode == 'demo') else 1)
-    pygame.mixer.music.play()
+def airplane_animation(start_pos, end_pos, start_radians, end_radians, elapsed_time, duration):
+    t = elapsed_time / duration
+    x = start_pos[0] + (end_pos[0] - start_pos[0]) * t
+    y = start_pos[1] + (end_pos[1] - start_pos[1]) * t
+    delta = (end_radians - start_radians + math.pi) % (2 * math.pi) - math.pi
+    radians = start_radians + delta * t
+    return ((x, y), radians)
+
+def airplane_holding_pattern_animation(mode, elapsed_time, orbit_time=6):
+    x, y = data.locs["25-origin"]
+    t = (elapsed_time / orbit_time) % 1
+    radians = (-2 * math.pi) * t
+    x = x + ((300 * config.screen_width_conversion_factor) * math.cos(radians))
+    y = y + ((300 * config.screen_width_conversion_factor) * math.sin(radians))
+    return ((x, y), radians)
+
 
 # gets flight num string
 def get_flight_num_text(flight_num_string, day_bool):
@@ -87,19 +98,31 @@ vital_statuses = {
 
 # pygame loop trackers
 last_time = time.time()
-previous_state = -1
+airplane_transition_animation = False
+previous_loc_num = 0
+airplane_transition_animation_previous_position = data.locs["0"]
+airplane_transition_animation_previous_radians = data.loc_radians["0"]
+airplane_transition_animation_time = 0
+holding_pattern_animation_time = 0
+holding_pattern_last_position = data.locs["25"]
+holding_pattern_last_radians = data.loc_radians["25"]
 approach_anim_time = 0
 beacon_anim_time = 0
 gate_anim_time = 0
 gate_close_anim_time = 0
 previous_gate_open = False
 gate_closing_sequence = False
+previous_day = -1
+day_to_night_transition = False
+day_to_night_transition_time = 0
+night_to_day_transition = False
+night_to_day_transition_time = 0
 
 # the simulation
 pygame.init()
-pygame.mixer.init()
+#pygame.mixer.init()
 
-#setting the screen dimensions
+# setting the screen dimensions
 screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 
 # Load backgrounds to save time
@@ -108,6 +131,30 @@ background_day = pygame.transform.scale(background_day, (config.screen_width, co
 background_night = pygame.image.load('night.png')
 background_night = pygame.transform.scale(background_night, (config.screen_width, config.screen_height)).convert()
 
+# Load day - night maps
+darkness_10_percent = pygame.transform.scale(pygame.image.load('10_-darkness.png'), (config.screen_width, config.screen_height)).convert()
+darkness_20_percent = pygame.transform.scale(pygame.image.load('20_-darkness.png'), (config.screen_width, config.screen_height)).convert()
+darkness_30_percent = pygame.transform.scale(pygame.image.load('30_-darkness.png'), (config.screen_width, config.screen_height)).convert()
+darkness_40_percent = pygame.transform.scale(pygame.image.load('40_-darkness.png'), (config.screen_width, config.screen_height)).convert()
+darkness_50_percent = pygame.transform.scale(pygame.image.load('50_-darkness.png'), (config.screen_width, config.screen_height)).convert()
+darkness_60_percent = pygame.transform.scale(pygame.image.load('60_-darkness.png'), (config.screen_width, config.screen_height)).convert()
+darkness_70_percent = pygame.transform.scale(pygame.image.load('70_-darkness.png'), (config.screen_width, config.screen_height)).convert()
+darkness_80_percent = pygame.transform.scale(pygame.image.load('80_-darkness.png'), (config.screen_width, config.screen_height)).convert()
+darkness_85_percent = pygame.transform.scale(pygame.image.load('85_-darkness.png'), (config.screen_width, config.screen_height)).convert()
+darkness_90_percent = pygame.transform.scale(pygame.image.load('90_-darkness.png'), (config.screen_width, config.screen_height)).convert()
+darkness_93_percent = pygame.transform.scale(pygame.image.load('93_-darkness.png'), (config.screen_width, config.screen_height)).convert()
+darkness_95_percent = pygame.transform.scale(pygame.image.load('95_-darkness.png'), (config.screen_width, config.screen_height)).convert()
+darkness_96_percent = pygame.transform.scale(pygame.image.load('96_-darkness.png'), (config.screen_width, config.screen_height)).convert()
+darkness_97_percent = pygame.transform.scale(pygame.image.load('97_-darkness.png'), (config.screen_width, config.screen_height)).convert()
+darkness_98_percent = pygame.transform.scale(pygame.image.load('98_-darkness.png'), (config.screen_width, config.screen_height)).convert()
+darkness_99_percent = pygame.transform.scale(pygame.image.load('99_-darkness.png'), (config.screen_width, config.screen_height)).convert()
+
+time_to_background = {
+    0: background_day, 1: darkness_10_percent, 2: darkness_20_percent, 3: darkness_30_percent, 4: darkness_40_percent, 5: darkness_50_percent,
+    6: darkness_60_percent, 7: darkness_70_percent, 8: darkness_80_percent, 9: darkness_90_percent, 10: darkness_93_percent, 11: darkness_95_percent,
+    12: darkness_96_percent, 13: darkness_97_percent, 14: darkness_98_percent, 15: darkness_99_percent, 16: background_night
+}
+
 # Load font object to save time
 font = pygame.font.Font("freesansbold.ttf", int(40 * config.screen_width_conversion_factor))
 
@@ -115,7 +162,7 @@ running = True
 
 #the game loop
 while running:
-    
+    a = time.time()
     #game stops when the 'x' button is hit on the pygame window
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -139,7 +186,6 @@ while running:
     # storing input
     state_num = input["state"]
     loc_num = str(input["loc"])
-    voice_file_num = input["voice_file"]
     flight_num_string = input["flight_id"]
     mode = input["mode"]
     vital_statuses = {}
@@ -156,15 +202,34 @@ while running:
     # getting state information
     new_position = data.locs[loc_num]
     airplane_rotation = data.loc_radians[loc_num]
-    voice_file = data.voice_files[voice_file_num]
 
     # you have to reset the entire screen to get rid of stuff - so everything has to be redrawn
     # start screen reset
-    screen.fill("white")
+    screen.fill("white") # ~ .005 seconds
     # set background to day or night based on day input
-    background = background_day if day else background_night
-    #adding background to screen
-    screen.blit(background, (0, 0))
+    if (previous_day == True and day == False): day_to_night_transition = True
+    elif (previous_day == False and day == True): night_to_day_transition = True
+    if day_to_night_transition:
+        day_to_night_transition_time = min(16, day_to_night_transition_time + delta_time)
+        background = time_to_background[int(day_to_night_transition_time)]
+        if day_to_night_transition_time == 16: day_to_night_transition = False
+        night_to_day_transition = False
+        night_to_day_transition_time = 0
+    elif night_to_day_transition:
+        night_to_day_transition_time = min(16, night_to_day_transition_time + delta_time)
+        background = time_to_background[int(16 - night_to_day_transition_time)]
+        if night_to_day_transition_time == 16: night_to_day_transition = False
+        day_to_night_transition = False
+        day_to_night_transition_time = 0
+    else: # just regular day or night
+        background = background_day if day else background_night
+        day_to_night_transition = False
+        day_to_night_transition_time = 0
+        night_to_day_transition = False
+        night_to_day_transition_time = 0
+
+    # adding background to screen
+    screen.blit(background, (0, 0)) # ~ .008 seconds
     #end screen reset
     
     # drawing lights if their associated boolean is true
@@ -256,7 +321,6 @@ while running:
         color = (0, 255, 0) if vital_statuses[vital] else (255, 0, 0)
         pygame.draw.circle(screen, color, (config.screen_width * (.01), start_y + i * line_spacing), config.screen_height * (.01))
     
-
     # Creating text object for flight number
     flight_num_text = get_flight_num_text(flight_num_string, day)
     # Creating text surface (get the rect of the text itself)
@@ -267,13 +331,41 @@ while running:
     flight_num_text_box.left = 50 * config.screen_width_conversion_factor
     flight_num_text_box.top = -45 * config.screen_width_conversion_factor
     
-    # playing the voice file if the state changes (so the voice file only plays once at the start of a new state)
-    if (state_num != previous_state):
-        play_voice_file(voice_file, mode)
-
     # arranging the airplane
 
-    # rotate(clockwise) airplane by radians parameter
+    # start the transition animation to current state
+    if previous_loc_num != loc_num:
+        airplane_transition_animation_previous_position = data.locs[str(previous_loc_num)] if (previous_loc_num != "25") else holding_pattern_last_position
+        airplane_transition_animation_previous_radians = data.loc_radians[str(previous_loc_num)] if (previous_loc_num != "25") else holding_pattern_last_radians
+        airplane_transition_animation = True
+
+    # if we're in the middle of a transition animation
+    if airplane_transition_animation:
+        if previous_loc_num != loc_num: # state has already changed to the state after the one we're in the middle of getting to
+            airplane_transition_animation_previous_position = data.locs[str(previous_loc_num)] if (previous_loc_num != "25") else holding_pattern_last_position
+            airplane_transition_animation_previous_radians = data.loc_radians[str(previous_loc_num)] if (previous_loc_num != "25") else holding_pattern_last_radians
+            airplane_transition_animation_time = 0
+
+        airplane_transition_animation_time = min(airplane_transition_animation_time + delta_time, (data.state_minimum_loops[mode][loc_num] + .05))
+        if (loc_num == "0" and (airplane_transition_animation_previous_position not in data.locs.values())): # if we're going holding (state 25) --> state zero then its flying away so make the plane fly off the screen in the direction its already going
+            airplane_rotation = airplane_transition_animation_previous_radians
+            x, y = airplane_transition_animation_previous_position
+            new_position = ((x + math.cos(-1 * airplane_rotation) * 3500 * config.screen_width_conversion_factor), (y + math.sin(-1 * airplane_rotation) * 3500 * config.screen_width_conversion_factor))
+        new_position, airplane_rotation = airplane_animation(airplane_transition_animation_previous_position, new_position, airplane_transition_animation_previous_radians, airplane_rotation, airplane_transition_animation_time, data.state_minimum_loops[mode][loc_num])
+        airplane_transition_animation = False if airplane_transition_animation_time == (data.state_minimum_loops[mode][loc_num] + .05) else True
+    else:
+        airplane_transition_animation_time = 0
+    
+    if (loc_num == "25" and not airplane_transition_animation): # if we're in holding and not transitioning to it (we already got there)
+        holding_pattern_animation_time = holding_pattern_animation_time + delta_time
+        new_position, airplane_rotation = airplane_holding_pattern_animation(mode, holding_pattern_animation_time)
+        holding_pattern_last_position = new_position
+        holding_pattern_last_radians = airplane_rotation
+    else:
+        holding_pattern_animation_time = 0
+        holding_pattern_last_position = data.locs["25"]
+        holding_pattern_last_radians = data.loc_radians["25"]
+
     rotate_airplane(airplane_rotation, airplane_position)
     
     # changing airplane position
@@ -301,6 +393,8 @@ while running:
     pygame.display.update()
 
     previous_gate_open = vital_statuses["gate_open"]
-    previous_state = state_num # updating previous state to current state
+    previous_loc_num = loc_num
+    previous_day = day
+    #print("frame time:", time.time() - a)
 
 pygame.quit()

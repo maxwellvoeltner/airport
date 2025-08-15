@@ -7,6 +7,8 @@ screen_height = monitor.height
 screen_width_conversion_factor = screen_width / 3840
 screen_height_conversion_factor = screen_height / 2160
 
+state_machine_seconds_per_loop = 1.1
+
 # airplane color
 airplane_day_color = "red"
 airplane_night_color = "green"

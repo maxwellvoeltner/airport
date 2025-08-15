@@ -33,7 +33,6 @@ def validate_airplane_schedule():
 
         if i > 0:  
             assert arrival_time - prev_arrival >= cycle_time, f"Flight from {src} is scheduled too close to previous flight"
-            assert arrival_time - prev_arrival <= 1440 - cycle_time, f"Flight from {src} is scheduled too far from previous flight"
 
         prev_arrival = arrival_time
 
