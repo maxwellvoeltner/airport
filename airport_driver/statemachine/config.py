@@ -14,40 +14,24 @@ example of what this means:
     - this prevents each flight from being delayed everytime a new delay occurs
     - you give the flights further back ( like flight 3 ) a safety buffer so hopefully you can leave it alone even if theres a bit more of a delay still to come with flight 1
 '''
-delay_increment_per_flight = 10
+delay_increment_per_flight = 10 # how much more delay padding the flight gets than the last
 
-# maximum on how much more a flight can be delayed than the minimum amount necessary to keep the schedule on point
-'''
-prevents a situation like:
-    - flight 1 created a 3 hour delay so now ALL ( lets say 9 ) subsequent flights are impacted
-    - this prevents flight 9 from being delayed by a lot
-    - without it there would create unnecessarily huge amounts of spacing ( more than a safety buffer ) between later flights
-'''
-delay_offset_cap = 30
-max_arrival_delay = 30
-max_departure_delay = 120
-delay_checker_frequency = 10
-'''
-flights information
-rules:
-    - "sourceAirport" needs to be unique
-    - "arrivalTime" must be in the range [0, 1440)
-    - arrival times should be at least < minutes_per_airplane_cycle > apart ( otherwise you're gonna have to wait a long time to get to the next flight )
-note:
-    the departure times get automatically synced-up with the arrival times to fit the timing of the simulation based on the minutes_per_airplane_cycle
-    so the "departureTime" values don't matter here
-'''
+delay_offset_cap = 30 # maximum for extra time added to delay (for padding)
+max_arrival_delay = 30 # how much extra time a plane is allowed to take landing before it has to go land somewhere else
+max_departure_delay = 120 # how long the departure can be delayed before being cancelled
+delay_checker_frequency = 10 # how often (in driver loops) we check for delays
+
 initial_airplanes = [
-    { "sourceAirport": "LAX", "arrivalFlight": "WN1500", "arrivalTime": 720, "arrivalStatus": "Scheduled", "departureFlight": "WN1501", "departureTime": 797, "departureStatus": "Scheduled", "gate": 1 },
-    { "sourceAirport": "SFO", "arrivalFlight": "F9265", "arrivalTime": 855, "arrivalStatus": "Scheduled", "departureFlight": "F9266", "departureTime": 932, "departureStatus": "Scheduled", "gate": 2 },
-    { "sourceAirport": "SEA", "arrivalFlight": "AA900", "arrivalTime": 990, "arrivalStatus": "Scheduled", "departureFlight": "AA901", "departureTime": 1067, "departureStatus": "Scheduled", "gate": 3 },
-    { "sourceAirport": "PDX", "arrivalFlight": "UA2103", "arrivalTime": 1126, "arrivalStatus": "Scheduled", "departureFlight": "UA2104", "departureTime": 1203, "departureStatus": "Scheduled", "gate": 4 },
-    { "sourceAirport": "SAN", "arrivalFlight": "DL1202", "arrivalTime": 1265, "arrivalStatus": "Scheduled", "departureFlight": "DL1203", "departureTime": 1342, "departureStatus": "Scheduled", "gate": 5 },
-    { "sourceAirport": "LAS", "arrivalFlight": "NK740", "arrivalTime": 1405, "arrivalStatus": "Scheduled", "departureFlight": "NK741", "departureTime": 1482, "departureStatus": "Scheduled", "gate": 1 },
-    { "sourceAirport": "PHX", "arrivalFlight": "B61720", "arrivalTime": 1550, "arrivalStatus": "Scheduled", "departureFlight": "B61721", "departureTime": 1627, "departureStatus": "Scheduled", "gate": 2 },
-    { "sourceAirport": "DEN", "arrivalFlight": "WN505", "arrivalTime": 1695, "arrivalStatus": "Scheduled", "departureFlight": "WN506", "departureTime": 1772, "departureStatus": "Scheduled", "gate": 3 },
-    { "sourceAirport": "DFW", "arrivalFlight": "AS1182", "arrivalTime": 1840, "arrivalStatus": "Scheduled", "departureFlight": "AS1183", "departureTime": 1917, "departureStatus": "Scheduled", "gate": 4 },
-    { "sourceAirport": "ORD", "arrivalFlight": "WN3421", "arrivalTime": 1990, "arrivalStatus": "Scheduled", "departureFlight": "WN3422", "departureTime": 2067, "departureStatus": "Scheduled", "gate": 5 }
+    {'sourceAirport': 'LAX', 'arrivalFlight': 'WN1500', 'arrivalTime': 1035, 'arrivalStatus': 'Scheduled', 'departureFlight': 'WN1501', 'departureTime': 1119, 'departureStatus': 'Scheduled', 'gate': 1},
+    {'sourceAirport': 'SFO', 'arrivalFlight': 'F9265', 'arrivalTime': 1174, 'arrivalStatus': 'Scheduled', 'departureFlight': 'F9266', 'departureTime': 1258, 'departureStatus': 'Scheduled', 'gate': 2},
+    {'sourceAirport': 'SEA', 'arrivalFlight': 'AA900', 'arrivalTime': 1314, 'arrivalStatus': 'Scheduled', 'departureFlight': 'AA901', 'departureTime': 1398, 'departureStatus': 'Scheduled', 'gate': 3},
+    {'sourceAirport': 'PDX', 'arrivalFlight': 'UA2103', 'arrivalTime': 1469, 'arrivalStatus': 'Scheduled', 'departureFlight': 'UA2104', 'departureTime': 1553, 'departureStatus': 'Scheduled', 'gate': 4},
+    {'sourceAirport': 'SAN', 'arrivalFlight': 'DL1202', 'arrivalTime': 1604, 'arrivalStatus': 'Scheduled', 'departureFlight': 'DL1203', 'departureTime': 1688, 'departureStatus': 'Scheduled', 'gate': 5},
+    {'sourceAirport': 'LAS', 'arrivalFlight': 'NK740', 'arrivalTime': 1753, 'arrivalStatus': 'Scheduled', 'departureFlight': 'NK741', 'departureTime': 1837, 'departureStatus': 'Scheduled', 'gate': 1},
+    {'sourceAirport': 'PHX', 'arrivalFlight': 'B61720', 'arrivalTime': 1898, 'arrivalStatus': 'Scheduled', 'departureFlight': 'B61721', 'departureTime': 1982, 'departureStatus': 'Scheduled', 'gate': 2},
+    {'sourceAirport': 'DEN', 'arrivalFlight': 'WN505', 'arrivalTime': 2038, 'arrivalStatus': 'Scheduled', 'departureFlight': 'WN506', 'departureTime': 2122, 'departureStatus': 'Scheduled', 'gate': 3},
+    {'sourceAirport': 'DFW', 'arrivalFlight': 'AS1182', 'arrivalTime': 2195, 'arrivalStatus': 'Scheduled', 'departureFlight': 'AS1183', 'departureTime': 2279, 'departureStatus': 'Scheduled', 'gate': 4},
+    {'sourceAirport': 'ORD', 'arrivalFlight': 'WN3421', 'arrivalTime': 2338, 'arrivalStatus': 'Scheduled', 'departureFlight': 'WN3422', 'departureTime': 2422, 'departureStatus': 'Scheduled', 'gate': 5}
 ]
 
 '''

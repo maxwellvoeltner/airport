@@ -284,16 +284,16 @@ while running:
         gate_anim_time = 0
         gate_closing_sequence = True if previous_gate_open else gate_closing_sequence
         if gate_closing_sequence:
-            gate_close_anim_time = min((gate_close_anim_time + delta_time), 4) # capped at 4 cause that's all the way closed
-            pygame.draw.rect(screen, config.gate_open_color, (data.gate_x_pos, data.closed_gate_y_pos - ((4 - gate_close_anim_time) / 4) * data.gate_height, data.gate_width, data.gate_height))
-            gate_closing_sequence = False if gate_close_anim_time == 4 else True
+            gate_close_anim_time = min((gate_close_anim_time + delta_time), 3) # capped at 3 cause that's all the way closed
+            pygame.draw.rect(screen, config.gate_open_color, (data.gate_x_pos, data.closed_gate_y_pos - ((3 - gate_close_anim_time) / 3) * data.gate_height, data.gate_width, data.gate_height))
+            gate_closing_sequence = False if gate_close_anim_time == 3 else True
         else:
             pygame.draw.rect(screen, config.gate_closed_color, (data.gate_x_pos, data.closed_gate_y_pos, data.gate_width, data.gate_height))
     else:
         gate_close_anim_time = 0
         gate_closing_sequence = False
-        gate_anim_time = min((gate_anim_time + delta_time), 4) # capped at 4 cause that's all the way open
-        pygame.draw.rect(screen, config.gate_open_color, (data.gate_x_pos, data.closed_gate_y_pos - (gate_anim_time / 4) * data.gate_height, data.gate_width, data.gate_height))
+        gate_anim_time = min((gate_anim_time + delta_time), 3) # capped at 3 cause that's all the way open
+        pygame.draw.rect(screen, config.gate_open_color, (data.gate_x_pos, data.closed_gate_y_pos - (gate_anim_time / 3) * data.gate_height, data.gate_width, data.gate_height))
     
     # drawing vital status
     period = "day" if day else "night"
@@ -321,15 +321,16 @@ while running:
         color = (0, 255, 0) if vital_statuses[vital] else (255, 0, 0)
         pygame.draw.circle(screen, color, (config.screen_width * (.01), start_y + i * line_spacing), config.screen_height * (.01))
     
-    # Creating text object for flight number
-    flight_num_text = get_flight_num_text(flight_num_string, day)
-    # Creating text surface (get the rect of the text itself)
-    flight_num_text_box = flight_num_text.get_rect()
-    # Adjusting the width based on screen width conversion factor
-    flight_num_text_box.width += 15 * config.screen_width_conversion_factor
-    # Positioning the flight number text (above the airplane by default)
-    flight_num_text_box.left = 50 * config.screen_width_conversion_factor
-    flight_num_text_box.top = -45 * config.screen_width_conversion_factor
+    if (loc_num != "0"):
+        # Creating text object for flight number
+        flight_num_text = get_flight_num_text(flight_num_string, day)
+        # Creating text surface (get the rect of the text itself)
+        flight_num_text_box = flight_num_text.get_rect()
+        # Adjusting the width based on screen width conversion factor
+        flight_num_text_box.width += 15 * config.screen_width_conversion_factor
+        # Positioning the flight number text (above the airplane by default)
+        flight_num_text_box.left = 50 * config.screen_width_conversion_factor
+        flight_num_text_box.top = -45 * config.screen_width_conversion_factor
     
     # arranging the airplane
 
@@ -351,6 +352,9 @@ while running:
             airplane_rotation = airplane_transition_animation_previous_radians
             x, y = airplane_transition_animation_previous_position
             new_position = ((x + math.cos(-1 * airplane_rotation) * 3500 * config.screen_width_conversion_factor), (y + math.sin(-1 * airplane_rotation) * 3500 * config.screen_width_conversion_factor))
+        elif (loc_num == "0" and airplane_transition_animation_previous_position != data.locs["24"]):
+            new_position = airplane_transition_animation_previous_position
+            airplane_rotation = airplane_transition_animation_previous_radians
         new_position, airplane_rotation = airplane_animation(airplane_transition_animation_previous_position, new_position, airplane_transition_animation_previous_radians, airplane_rotation, airplane_transition_animation_time, data.state_minimum_loops[mode][loc_num])
         airplane_transition_animation = False if airplane_transition_animation_time == (data.state_minimum_loops[mode][loc_num] + .05) else True
     else:

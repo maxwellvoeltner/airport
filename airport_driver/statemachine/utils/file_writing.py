@@ -21,7 +21,6 @@ def send_environment(sm, env):
                 "beacon": env["beacon_light"],
                 "gate_open": env["gate_open"],
                 "day": sm.day,
-                "voice_file": sm.voiceComm,
                 "flight_id": sm.current_flight_id,
                 "mode": sm.mode
             }
@@ -43,7 +42,6 @@ def final_send_environment(sm, env):
                 "beacon": env["beacon_light"],
                 "gate_open": env["gate_open"],
                 "day": sm.day,
-                "voice_file": sm.voiceComm,
                 "flight_id": sm.current_flight_id,
                 "mode": sm.mode
             }

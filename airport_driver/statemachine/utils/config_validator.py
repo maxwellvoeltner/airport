@@ -31,7 +31,8 @@ def validate_airplane_schedule():
         arrival_time = flight["arrivalTime"]
         assert isinstance(arrival_time, int) and arrival_time >= 0, f"Invalid arrivalTime for {src}"
 
-        if i > 0:  
+        if i > 0:
+            assert arrival_time - prev_arrival >= 0, f"Flight from {src} is scheduled to arrive before previous flight"
             assert arrival_time - prev_arrival >= cycle_time, f"Flight from {src} is scheduled too close to previous flight"
 
         prev_arrival = arrival_time

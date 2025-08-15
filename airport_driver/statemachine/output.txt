@@ -1,1 +1,1 @@
-{"state": "state_four", "loc": 4, "RW6L": true, "RW6R": false, "approach": true, "taxiway": false, "fuel_depot": true, "beacon": true, "gate_open": false, "day": 1, "voice_file": "5.0", "flight_id": "SFO", "mode": "demo"}
+{"state": "state_one", "loc": 1, "RW6L": false, "RW6R": false, "approach": false, "taxiway": false, "fuel_depot": true, "beacon": false, "gate_open": false, "day": 1, "flight_id": "PHX", "mode": "competition"}

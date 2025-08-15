@@ -4,6 +4,7 @@ from snap7.util import get_bool
 from pymodbus.client import ModbusTcpClient
 from pycomm3 import SLCDriver
 import config
+from utils import state_transition_aux
 
 ######################### ALCMS #########################
 
@@ -173,6 +174,22 @@ def update_environment( sm ):
         "gate_open":          gate_open
     }
     return env
+
+
+def day_night_transition( sm , previous_loop_day ):
+    action = None
+    flag = None
+    if (sm.day == 0 and previous_loop_day == 1): # day --> night transition
+        action = "ON"
+        if (sm.current_state.name in ["state_three", "state_four", "state_five", "state_six", "state_twenty_five"]): flag = "RW6L"
+        elif (sm.current_state.name in ["state_ten", "state_eleven", "state_sixteen", "state_seventeen", "state_eighteen", "state_nineteen"]): flag = "taxiway_lights"
+        elif (sm.current_state.name in ["state_twenty", "state_twenty_one", "state_twenty_two"]): flag = "RW6R"
+    elif (sm.day == 1 and previous_loop_day == 0): # night --> day transition
+        action = "OFF"
+    if action is not None:
+        for light in ["RW6L", "taxiway_lights", "RW6R"]:
+            if light != flag:
+                state_transition_aux.set_signal(sm.mode, sm.alcms_client, sm.day, light, action, day_only=False) # telling airio server to turn on all light outputs
 
 
 def handle_exit( state_machine ):

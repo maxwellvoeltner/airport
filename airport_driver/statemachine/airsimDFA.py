@@ -4,7 +4,7 @@ import utils.flight_delay_aux as flight_delay_aux
 
 class Airsim( StateMachine ):
 
-    def __init__(self, mode="demo", alcms_client=None, fuel_client=None, gate_client=None, starting_minutes=0, minutes_per_loop=1, time_to_arrive_from_s0=6, flight_list=["BWI"], voiceComm="0.0",
+    def __init__(self, mode="demo", alcms_client=None, fuel_client=None, gate_client=None, starting_minutes=0, minutes_per_loop=1, time_to_arrive_from_s0=6, flight_list=["BWI"],
                 model=None, state_field="state", start_value=None, rtc=True, allow_event_without_transition=False, listeners=None, **state_times):
 
         self.mode = mode
@@ -22,7 +22,6 @@ class Airsim( StateMachine ):
         self.current_flight_object = { "sourceAirport": "BWI", "arrivalFlight": "BA2", "arrivalTime": 506, "arrivalStatus": "Scheduled", "departureFlight": "BA1", "departureTime": 592, "departureStatus": "Scheduled", "gate": 1 }
         self.current_flight_id = "BWI"
         self.day = 1 # Daytime/Nighttime: value of 1 indicates daytime and value of 0 indicates nighttime.
-        self.voiceComm = voiceComm # the voicefile number of the voicefile to be played.
         self.loc = 0 # location number of the airplane on the map in the driver.
         for key, value in state_times.items(): # these are all the minimum amount of time the DFA must spend in the state to have the option of transitioning
             setattr(self, key, value)
@@ -345,12 +344,10 @@ class Airsim( StateMachine ):
     state_twenty_two_to_state_zero.add_event("delayed-beyond-limit")
 
 
-    def enter_state(self, loc_value, voice=None):
-        # every state entry we have to update the entry loop number, location number, and voice file (most times)
+    def enter_state(self, loc_value):
+        # every state entry we have to update the entry loop number, location number
         self.state_entry_loop_num = self.loop_num
         self.loc = loc_value
-        if voice is not None:
-            self.voiceComm = voice
 
     def on_enter_state_zero(self):
         self.current_flight_id = self.flight_list[self.current_flight_index] # make the current flight id the name of the airport it's coming from
@@ -366,30 +363,30 @@ class Airsim( StateMachine ):
         if (self.mode == "demo"):
             action = "ON" if (self.day == 0) else "OFF"
             for light in ["RW6L", "taxiway_lights", "RW6R"]:
-                state_transition_aux.set_signal(self.mode, self.alcms_client, self.day, light, action, day_only=False) # telling airio server to turn on all light outputs
+                state_transition_aux.set_signal(self.mode, self.alcms_client, self.day, light, action, day_only=False) # turn on/off all light outputs depending on day/night
 
     def on_enter_state_one(self): # top left over the sea (landing sequence - 1/7)
-        self.enter_state(1, "1.0")
+        self.enter_state(1)
         state_transition_aux.update_flight(self.current_flight_id, {"arrivalStatus": "En Route"})
 
     def on_enter_state_two(self): # over the sea (landing sequence - 2/7)
-        self.enter_state(2, "2.0")
+        self.enter_state(2)
 
     def on_exit_state_two(self): # turning on lights for landing assistance
         state_transition_aux.set_signal(self.mode, self.alcms_client, self.day, "RW6L", "ON", day_only=False) # telling airio server to set approach output to turn on approach output
 
     def on_enter_state_three(self): # middle left over the sea (landing sequence - 3/7)
-        self.enter_state(3, "3.0")
+        self.enter_state(3)
 
     def on_enter_state_four(self):
-        self.enter_state(4, "5.0") # middle left over the sea (landing sequence - 4/7)
+        self.enter_state(4) # middle left over the sea (landing sequence - 4/7)
 
     def on_enter_state_five(self):
-        self.enter_state(5, "15.0") # bottom left over the sea (landing sequence - 5/7)
+        self.enter_state(5) # bottom left over the sea (landing sequence - 5/7)
         state_transition_aux.update_flight(self.current_flight_id, {"arrivalStatus": "On Approach"})
 
     def on_enter_state_six(self):
-        self.enter_state(6, "0.0") # in-front of landing (left) runway (landing sequence - 6/7)
+        self.enter_state(6) # in-front of landing (left) runway (landing sequence - 6/7)
 
     def on_exit_state_six(self): # turning off the approach and vasi lights
         state_transition_aux.set_signal(self.mode, self.alcms_client, self.day, "RW6L", "OFF", day_only=True) # telling airio server to turn off approach output
@@ -399,90 +396,86 @@ class Airsim( StateMachine ):
         state_transition_aux.update_flight(self.current_flight_id, {"arrivalStatus": "Arrived", "arrivalTime": self.simulation_minutes})
 
     def on_enter_state_eight(self):
-        self.enter_state(8, "17.0") # middle of landing (left) runway
+        self.enter_state(8) # middle of landing (left) runway
 
     def on_enter_state_nine(self):
-        self.enter_state(9, "0.0") # upper-middle of landing (left) runway (fueling state)
+        self.enter_state(9) # upper-middle of landing (left) runway (fueling state)
     
     def on_exit_state_nine(self):
         state_transition_aux.set_signal(self.mode, self.alcms_client, self.day, "RW6L", "OFF", day_only=True) # telling airio server to turn off left runway lights output
         state_transition_aux.set_signal(self.mode, self.alcms_client, self.day, "taxiway_lights", "ON", day_only=False) # telling airio server to turn on taxi light output
 
     def on_enter_state_ten(self):
-        self.enter_state(10, "18.0") # top left of upper taxiway route (taxiway sequence 1 - 1/2)
+        self.enter_state(10) # top left of upper taxiway route (taxiway sequence 1 - 1/2)
 
     def on_enter_state_eleven(self):
-        self.enter_state(11, "20.0") # top middle of upper taxiway route (taxiway sequence 1 - 2/2)
+        self.enter_state(11) # top middle of upper taxiway route (taxiway sequence 1 - 2/2)
 
     def on_exit_state_eleven(self):
         state_transition_aux.set_signal(self.mode, self.alcms_client, self.day, "taxiway_lights", "OFF", day_only=True) # telling airio server to turn off taxiway lights output
 
     def on_enter_state_twelve(self):
-        self.enter_state(12, "0.0") # top of ramp (ramp sequence - 1/4)
+        self.enter_state(12) # top of ramp (ramp sequence - 1/4)
         state_transition_aux.update_flight(self.current_flight_id, {"departureStatus": "Check-In"})
 
     def on_enter_state_thirteen(self):
-        self.enter_state(13, "0.0") # approaching passenger boarding bridge (ramp sequence - 2/4)
+        self.enter_state(13) # approaching passenger boarding bridge (ramp sequence - 2/4)
 
     def on_enter_state_fourteen(self):
-        self.enter_state(f"14.{self.current_flight_object.get('gate')}", "21.0") # stationed at passenger boarding bridge (ramp sequence - 3/4)
+        self.enter_state(f"14.{self.current_flight_object.get('gate')}") # stationed at passenger boarding bridge (ramp sequence - 3/4)
         state_transition_aux.update_flight(self.current_flight_id, {"departureStatus": "Boarding"})
 
     def on_enter_state_fifteen(self):
-        self.enter_state(15, "22.0") # exiting ramp (ramp sequence - 4/4)
+        self.enter_state(15) # exiting ramp (ramp sequence - 4/4)
         state_transition_aux.update_flight(self.current_flight_id, {"departureStatus": "Taxiing"})
 
     def on_exit_state_fifteen(self):
         state_transition_aux.set_signal(self.mode, self.alcms_client, self.day, "taxiway_lights", "ON", day_only=False) # telling airio server to turn on taxiway lights output
 
     def on_enter_state_sixteen(self):
-        self.enter_state(16, "23.0") # top of taxiway (taxiway sequence 2 - 1/4)
+        self.enter_state(16) # top of taxiway (taxiway sequence 2 - 1/4)
 
     def on_enter_state_seventeen(self):
-        self.enter_state(17, "0.0") # middle of taxiway (taxiway sequence 2 - 2/4)
+        self.enter_state(17) # middle of taxiway (taxiway sequence 2 - 2/4)
 
     def on_enter_state_eighteen(self):
-        self.enter_state(18, "24.0") # bottom-right of taxiway (taxiway sequence 2 - 3/4)
+        self.enter_state(18) # bottom-right of taxiway (taxiway sequence 2 - 3/4)
 
     def on_enter_state_nineteen(self):
-        self.enter_state(19, "25.0") # bottom-left of taxiway (taxiway sequence 2 - 4/4)
+        self.enter_state(19) # bottom-left of taxiway (taxiway sequence 2 - 4/4)
 
     def on_exit_state_nineteen(self):
         state_transition_aux.set_signal(self.mode, self.alcms_client, self.day, "taxiway_lights", "OFF", day_only=True) # telling airio server to turn off taxiway lights output
         state_transition_aux.set_signal(self.mode, self.alcms_client, self.day, "RW6R", "ON", day_only=False) # telling airio server to turn on right runway lights output
 
     def on_enter_state_twenty(self):
-        self.enter_state(20, "26.0") # bottom of right runway (takeoff sequence 1/4)
+        self.enter_state(20) # bottom of right runway (takeoff sequence 1/4)
         state_transition_aux.update_flight(self.current_flight_id, {"departureStatus": "On Runway"})
 
     def on_enter_state_twenty_one(self):
-        self.enter_state(21, "0.0") # middle of right runway (takeoff sequence 2/4)
+        self.enter_state(21) # middle of right runway (takeoff sequence 2/4)
 
     def on_enter_state_twenty_two(self):
-        self.enter_state(22, "0.0") # top of right runway (takeoff sequence 3/4)
+        self.enter_state(22) # top of right runway (takeoff sequence 3/4)
 
     def on_exit_state_twenty_two(self):
         state_transition_aux.set_signal(self.mode, self.alcms_client, self.day, "RW6R", "OFF", day_only=True) # telling airio server to turn off right runway lights output
 
     def on_enter_state_twenty_three(self):
-        self.enter_state(23, "0.0") # above top of right runway (takeoff sequence 4/4)
+        self.enter_state(23) # above top of right runway (takeoff sequence 4/4)
         state_transition_aux.update_flight(self.current_flight_id, {"departureStatus": "Departed", "departureTime" : self.simulation_minutes})
 
     def on_enter_state_twenty_four(self):
-        self.enter_state(24, "0.0") # well over the sea above the right runway
+        self.enter_state(24) # well over the sea above the right runway
 
-    def on_exit_state_twenty_four(self):
-        
+    def on_exit_state_twenty_four(self):  
         # resetting the flights statuses if we're ending the last flight's cycle
         if (self.current_flight_index == len(self.flight_list) - 1):
-
             state_transition_aux.reset_airplanes()
             self.current_flight_index = 0 # start over with the first flight
-
         else: # current flight is not the last flight and there were no delays
             self.current_flight_index += 1 # move onto the next flight
-        
 
     def on_enter_state_twenty_five(self):
-        self.enter_state(25, "0.0") # top right of left sea (holding pattern sequence 1/4)
+        self.enter_state(25) # top right of left sea (holding pattern sequence 1/4)
         state_transition_aux.update_flight(self.current_flight_id, {"arrivalStatus": "Holding"})

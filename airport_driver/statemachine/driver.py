@@ -7,6 +7,7 @@ import config
 def run_demo( sm ):
     try:
         while True:
+            previous_loop_day = sm.day
             try:
                 t = time()
                 # sending current time to the backend database (for the flight board to read and display)
@@ -22,9 +23,13 @@ def run_demo( sm ):
                 sleep(max(0, 1 - (time() - t))) # this is for the airplane animation to time up nicely in the display
                 file_writing.send_environment( sm, env )
 
+                # checking for day --> night / night --> day transition
+                airport_io.day_night_transition( sm, previous_loop_day )
+
                 # loop maintainence
                 sm.loop_num += 1 # updating loop number (necessary for state transition logic)
                 sm.simulation_minutes = (sm.simulation_minutes + sm.minutes_per_loop)  # updating the sim time in minutes
+                previous_loop_day = sm.day
                 print(sm.current_state.name)
                 sleep(max(0, 1.1 - (time() - t)))
 
