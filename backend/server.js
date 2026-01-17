@@ -4,26 +4,15 @@ require('dotenv').config()
 // getting express to connect code to server
 const express = require('express')
 
-// getting mongoose to connect to MongoDB
+
 const mongoose = require('mongoose')
 
-// getting the router with all the api requests
 const airplaneRoutes = require('./routes/airplanes')
 
-// Import the simulation time routes
 const simulationTimeRoutes = require('./routes/simulationTime')
 
-// envoking the express app
 const app = express()
 
-
-/*
-middleware
-
-When a request with a JSON payload hits your backend,
-express.json() parses the incoming data and puts it in req.body.
-This allows you to work with the JSON data in your route handlers.
-*/
 app.use(express.json())
 
 /*
@@ -54,3 +43,4 @@ mongoose.connect(process.env.LOCAL_MONGO_URI)
     .catch((error) => {
         console.log(error)
     })
+
