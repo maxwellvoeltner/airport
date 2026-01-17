@@ -3,14 +3,6 @@ const Airplane = require('../models/airplaneModel')
 // getting mongoose
 const mongoose = require('mongoose')
 
-/*
-These functions are associated w/ a unique route and request
-*/
-
-/*
-associated w/ request: GET and route: '/api/airplanes/'
-returns json objects of all of the airplanes in database
-*/
 const getAirplanes = async (req, res) => {
 
     // getting all airplanes in database in ascending order of when they were created
@@ -36,12 +28,10 @@ const getAirplane = async (req, res) => {
         // Finding the airplane by the "sourceAirport" field
         const airplane = await Airplane.findOne({ "sourceAirport": sourceAirport });
 
-        // If no airplane is found, respond with a 404 error
         if (!airplane) {
             return res.status(404).json({ error: "No airplane found with the specified sourceAirport value" });
         }
-
-        // Respond with the airplane data
+        
         res.status(200).json(airplane);
     } catch (error) {
         // Handle any errors during the database query
@@ -50,21 +40,11 @@ const getAirplane = async (req, res) => {
 };
 
 
-/*
-associated w/ request: POST and route: '/api/airplanes/'
-returns json object of airplane created and added to database
-*/
 const createAirplane = async (req, res) => {
 
     // getting the source airport, arrival flight, arrival time, arrival status, departure flight, departure time, departure status, and gate from body of request
     const {sourceAirport, arrivalFlight, arrivalTime, arrivalStatus, departureFlight, departureTime, departureStatus, gate} = req.body
 
-    /*
-    let - cannot access varible before initialization
-    empty fields array for keeping track of any empty fields during creation of airplane
-    this is used for the front end to border the empty field(s) box(es) in red
-    and output a message to the screen that there are empty fields
-    */
     let emptyFields = []
 
     // if source airport is null (no source airport location was given)
@@ -126,11 +106,6 @@ const createAirplane = async (req, res) => {
     // if there is at least 1 empty field
     if (emptyFields.length > 0) {
 
-        /*
-        responding w/:
-        status 400 = something went wrong
-        json(error mesage) = json object of error message w/ empty fields
-        */
         // return because this function is over if this situation happens
         return res.status(400).json({ error: 'Please fill in all fields', emptyFields })
     }
@@ -141,29 +116,15 @@ const createAirplane = async (req, res) => {
         // creating airplane json object with field values from params of requests
         const airplane = await Airplane.create({sourceAirport, arrivalFlight, arrivalTime, arrivalStatus, departureFlight, departureTime, departureStatus, gate})
 
-        /*
-        responding w/:
-        status 200 = everything's good
-        json(airplane) = json object of airplane created
-        */
         res.status(200).json(airplane)
     
     //error case
     } catch (error) {
 
-        /*
-        responding w/:
-        status 400 = something went wrong
-        json(error mesage) = json object of error message
-        */
         res.status(400).json({error: error.message})
     }
 }
 
-/*
-associated w/ request: DELETE and route: '/api/airplanes/{id}'
-deletes airplane entry in database
-*/
 const deleteAirplane = async (req, res) => {
 
     // getting id from params of request
@@ -172,11 +133,6 @@ const deleteAirplane = async (req, res) => {
     // if the id is not a valid MongoDB id
     if (!mongoose.Types.ObjectId.isValid(id)) {
 
-        /*
-        responding w/:
-        status 404: something went wong
-        json object of error message
-        */
         // return because this function is over if this situation happens
         return res.status(404).json({error: 'No such airplane'})
     }
@@ -187,20 +143,10 @@ const deleteAirplane = async (req, res) => {
     // if airplane is null (no airplane in database w/ given id)
     if (!airplane) {
 
-        /*
-        responding w/:
-        status 404: something went wong
-        json object of error message
-        */
         // return because this function is over if this situation happens
         return res.status(404).json({error: "No such airplane"})
     }
 
-    /*
-    responding w/:
-    status 200 = everything's good
-    json(airplane) = json object of airplane associated w/ id in database
-    */
     res.status(200).json(airplane)
  }
 
@@ -229,11 +175,6 @@ const updateAirplane = async (req, res) => {
     // getting source airport from params of request
     const { sourceAirport } = req.params
 
-    /*
-    getting airplane from collection and updating airplane entry in database
-    '...req.body' deconstructs the request body into the fields of the airplane
-    so the function can update the fields of the airplane entry in database
-    */
     const airplane = await Airplane.findOneAndUpdate({sourceAirport: sourceAirport}, {
         ...req.body
     })
@@ -241,20 +182,10 @@ const updateAirplane = async (req, res) => {
     // if airplane is null (no airplane in database w/ given id)
     if (!airplane) {
 
-        /*
-        responding w/:
-        status 404: something went wong
-        json object of error message
-        */
         // return because this function is over if this situation happens
         return res.status(404).json({error: "No such airplane"})
     }
 
-    /*
-    responding w/:
-    status 200 = everything's good
-    json(airplane) = json object of airplane created
-    */
     res.status(200).json(airplane)
 }
 
@@ -300,4 +231,5 @@ module.exports = {
     deleteManyAirplanes,
     updateAirplane,
     updateAirplanes
+
 }
