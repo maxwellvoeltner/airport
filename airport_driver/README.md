@@ -1,3 +1,6 @@
+Note: using python-statemachine library by Fernando Macedo:
+- https://github.com/fgmacedo/python-statemachine
+
 Inputs 
 
 Mark mentioned the following inputs for the DFA: 
